@@ -1,0 +1,6 @@
+(fp_lib_table
+  (lib (name "MIDI_TRS")(type "KiCad")(uri "/home/tom/TES/TES_Aurora/hardware/sym/MIDI_TRS.pretty")(options "")(descr ""))
+  (lib (name "MIDI_DIN5")(type "KiCad")(uri "/home/tom/TES/TES_Aurora/hardware/sym/MIDI_DIN5.pretty")(options "")(descr ""))
+  (lib (name "kicad_TES_logo")(type "KiCad")(uri "/home/tom/TES/TES_Aurora/hardware/sym/kicad_TES_logo")(options "")(descr ""))
+  (lib (name "MCU_RaspberryPi_and_Boards")(type "KiCad")(uri "/home/tom/TES/TES_Aurora/hardware/sym/RP-Pico Libraries/MCU_RaspberryPi_and_Boards.pretty")(options "")(descr ""))
+)
