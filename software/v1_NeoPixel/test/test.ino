@@ -9,6 +9,8 @@
 #include "AuroraParameters.h"
 
 params = AuroraParameters();
+uint8_t pitchbendAmplitude = 0;
+int16_t pitchbend = 0;
 
 //     int32_t color = strip.gamma32(strip.ColorHSV(((manager.get_note()[0])<<10) + ((PB.get_value()*pitchbend_amp_CC.get_value())>>3)));
 
@@ -43,8 +45,9 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 //   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
 //   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LED, PIN, NEO_GRB + NEO_KHZ800);
-
 uint32_t color[N_LED];
+uint8_t brightness;
+uint32_t color_base;
 
 void handleCC(byte channel, byte control1, byte control2) {
   Serial.print(control1);
@@ -52,6 +55,20 @@ void handleCC(byte channel, byte control1, byte control2) {
   Serial.println(control2);
   digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
+
+void handleNoteOn(byte channel, byte note, byte velocity) {
+  if (channel == params.midi_channel) {
+    color_base = strip.gamma32(strip.ColorHSV(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
+    brightness = velocity << 1;
+  }
+}
+
+void handleNoteOff(byte channel, byte note, byte velocity) {
+  if (channel == params.midi_channel) {
+    brightness = 0;
+  }
+}
+
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
@@ -99,11 +116,20 @@ void loop() {
   }
   strip.show();
 
+
+
   if (millis() > next_update) {
     next_update += params.period;
+
+    uint16_t r, g, b;
+    b = ((color_base & 255) * brightness) >> 8;
+    g = (((color_base >> 8) & 255) * brightness) >> 8;
+    r = (((color_base >> 16)) * brightness) >> 8;
+    color[0] = b + (g << 8) + (r << 16);
+    strip.setPixelColor(0, color[0]);
+
     for (uint8_t s = 0; s < params.speeder; s++) {
       for (int i = N_LED; i > 0; i--) {
-
         color[i] = color[i - 1];
         strip.setPixelColor(i, color[i]);
       }
