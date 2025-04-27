@@ -16,20 +16,17 @@ public:
     if (next_update < millis()) {
       next_update = millis() + response_time;
       has_changed = false;
-      Serial.println("bk1");
 
       button->update();
       if (button->has_been_released()) {
         currentItem += 1;
         if (currentItem == N_item) currentItem = 0;
         has_changed = true;
-        Serial.println("bk2");
       }
       int delta = enc->getPosition();
       if (delta != 0) {
         enc->setPosition(0);
         has_changed = true;
-        Serial.println("bk3");
       }
       if (has_changed) {
         switch (currentItem) {

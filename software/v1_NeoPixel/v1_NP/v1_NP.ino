@@ -61,7 +61,7 @@ void handleCC(byte _channel, byte control1, byte control2) {
   if (_channel == params.midi_channel && control1 == params.midi_control_LSB) {
     brightness &= 0b11111110000000;
     brightness += control2;
-    Serial.println(control2);
+    //Serial.println(control2);
   } else if (_channel == params.midi_channel && control1 == params.midi_pitchbend_amplitude_control) pitchbendAmplitude = control2;
 }
 
@@ -112,8 +112,18 @@ void setup() {
   Wire.setSDA(20);
   Wire.setSCL(21);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
-  delay(500);
+  display.clearDisplay();
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(3);
+  display.setCursor(40, 0);
+  display.print("TES");
+  display.setTextSize(1);
+  display.setCursor(50, 30);
+  display.print("Aurora v1");
+  display.setCursor(0, 54);
+  display.print("Powered by Adafruit");
   display.display();
+  delay(500);
 }
 
 
@@ -132,11 +142,11 @@ void loop() {
 
     color[0] = (strip.ColorHSV(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));  //, 255, brightness >> 6)); // with gamma on the value
     uint8_t r = (uint8_t)(color[0] >> 16), g = (uint8_t)(color[0] >> 8), b = (uint8_t)color[0];
-    uint8_t br = brightness>>6;
+    uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
     g = (g * br) >> 8;
     b = (b * br) >> 8;
-    color[0] = b + (g<<8) + (r<<16);
+    color[0] = b + (g << 8) + (r << 16);
     strip.setPixelColor(0, color[0]);
 
     for (uint8_t s = 0; s < params.speeder; s++) {
@@ -170,5 +180,4 @@ void loop1() {
   /*pushButton.update();
   if (pushButton.is_pressed()) digitalWrite(LED_BUILTIN,HIGH);
   else digitalWrite(LED_BUILTIN,LOW);*/
-
 }
