@@ -4,10 +4,13 @@
 
 struct AuroraParameters
 {
-uint8_t midi_channel;
-uint8_t speeder = 2;
-unsigned long period = 1;  // inverse to the speed of the wave
-}
+uint8_t midi_channel=2;
+uint8_t midi_control_MSB=74;
+uint8_t midi_control_LSB=75;
+uint8_t midi_pitchbend_amplitude_control = 5;
+uint8_t speeder = 1;
+unsigned long period = 10;  // inverse to the speed of the wave
+};
 
 
 

@@ -6,10 +6,12 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#include "AuroraParameters.h"
 #include "AuroraScreen.h"
+#include "AuroraParameters.h"
 
-params = AuroraParameters();
+
+AuroraParameters params;
+//params = AuroraParameters();
 uint8_t pitchbendAmplitude = 0;
 uint16_t brightness = 0;  // on 14bits
 uint8_t note;
@@ -22,6 +24,7 @@ int16_t pitchbend = 0;
 RotaryEncoder encoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
 void checkPosition() {
   encoder.tick();  // just call tick() to check the state.
+  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
 /** PUSH BUTTON */
@@ -35,6 +38,10 @@ Button pushButton(22);
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
+AuroraScreen auroraScreen(&display, &encoder, &pushButton, &params, 100);
+//AuroraScreen auroraScreen();
 
 
 
@@ -146,6 +153,8 @@ void loop1() {
 
   while (MIDI.read())
     ;
+
+  auroraScreen.update();
 
   /* display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
