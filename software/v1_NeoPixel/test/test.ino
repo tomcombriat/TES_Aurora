@@ -7,19 +7,25 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "AuroraParameters.h"
+#include "AuroraScreen.h"
 
 params = AuroraParameters();
 uint8_t pitchbendAmplitude = 0;
+uint16_t brightness = 0;  // on 14bits
+uint8_t note;
 int16_t pitchbend = 0;
 
-//     int32_t color = strip.gamma32(strip.ColorHSV(((manager.get_note()[0])<<10) + ((PB.get_value()*pitchbend_amp_CC.get_value())>>3)));
 
-/*
-TODO:
- - simple menu that has constant pointers to the screen, the rotary and the button and to the parameter struct
- - make the parameter structure
+/** ROTARY */
+#define ROTARY_PIN1 19
+#define ROTARY_PIN2 18
+RotaryEncoder encoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
+void checkPosition() {
+  encoder.tick();  // just call tick() to check the state.
+}
 
-*/
+/** PUSH BUTTON */
+Button pushButton(22);
 
 
 /** SCREEN */
@@ -36,30 +42,25 @@ Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 #define PIN 11
 #define N_LED 120
 
-// Parameter 1 = number of pixels in strip
-// Parameter 2 = Arduino pin number (most are valid)
-// Parameter 3 = pixel type flags, add together as needed:
-//   NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LEDs)
-//   NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-//   NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-//   NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-//   NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
 Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LED, PIN, NEO_GRB + NEO_KHZ800);
 uint32_t color[N_LED];
-uint8_t brightness;
-uint32_t color_base;
+unsigned long next_update = 0;
 
-void handleCC(byte channel, byte control1, byte control2) {
-  Serial.print(control1);
-  Serial.print(" ");
-  Serial.println(control2);
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+void handleCC(byte _channel, byte control1, byte control2) {
+  if (_channel == params.midi_channel && control1 == params.midi_control_MSB) {
+    brightness &= 0b00000001111111;
+    brightness += control2 << 7;
+  }
+  if (_channel == params.midi_channel && control1 == params.midi_control_LSB) {
+    brightness &= 0b11111110000000;
+    brightness += control2;
+    Serial.println(control2);
+  } else if (_channel == params.midi_channel && control1 == params.midi_pitchbend_amplitude_control) pitchbendAmplitude = control2;
 }
 
-void handleNoteOn(byte channel, byte note, byte velocity) {
-  if (channel == params.midi_channel) {
-    color_base = strip.gamma32(strip.ColorHSV(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
-    brightness = velocity << 1;
+void handleNoteOn(byte _channel, byte _note, byte _velocity) {
+  if (_channel == params.midi_channel) {
+    note = _note;
   }
 }
 
@@ -69,15 +70,28 @@ void handleNoteOff(byte channel, byte note, byte velocity) {
   }
 }
 
+void handlePitchBend(byte _channel, int _pitchbend) {
+  if (_channel == params.midi_channel) {
+    pitchbend = _pitchbend;
+  }
+}
+
 
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
+
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN1), checkPosition, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(ROTARY_PIN2), checkPosition, CHANGE);
+
   Serial.begin(115200);
   Serial1.setRX(1);
 
   MIDI.setHandleControlChange(handleCC);
+  MIDI.setHandleNoteOn(handleNoteOn);
+  MIDI.setHandleNoteOff(handleNoteOff);
+  MIDI.setHandlePitchBend(handlePitchBend);
   MIDI.turnThruOff();  // done in hw
   MIDI.begin(MIDI_CHANNEL_OMNI);
 
@@ -87,13 +101,14 @@ void setup() {
   strip.show();  // Initialize all pixels to 'off'
 
 
+
   Wire.setSDA(20);
   Wire.setSCL(21);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   delay(500);
   display.display();
 }
-unsigned long big_del = 1000, next_update = 0, next_big_update = 0;
+
 
 
 
@@ -105,33 +120,22 @@ unsigned long big_del = 1000, next_update = 0, next_big_update = 0;
 void loop() {
 
 
-  if (millis() > next_big_update) {
-    color[0] = random(2147483640);
-    strip.setPixelColor(0, color[0]);
-    next_big_update += big_del;
-
-  } else if (millis() > next_big_update - 500) {
-    color[0] = 0;
-    strip.setPixelColor(0, color[0]);
-  }
-  strip.show();
-
-
-
   if (millis() > next_update) {
     next_update += params.period;
 
-    uint16_t r, g, b;
-    b = ((color_base & 255) * brightness) >> 8;
-    g = (((color_base >> 8) & 255) * brightness) >> 8;
-    r = (((color_base >> 16)) * brightness) >> 8;
-    color[0] = b + (g << 8) + (r << 16);
+    color[0] = (strip.ColorHSV(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));  //, 255, brightness >> 6)); // with gamma on the value
+    uint8_t r = (uint8_t)(color[0] >> 16), g = (uint8_t)(color[0] >> 8), b = (uint8_t)color[0];
+    uint8_t br = brightness>>6;
+    r = (r * br) >> 8;
+    g = (g * br) >> 8;
+    b = (b * br) >> 8;
+    color[0] = b + (g<<8) + (r<<16);
     strip.setPixelColor(0, color[0]);
 
     for (uint8_t s = 0; s < params.speeder; s++) {
       for (int i = N_LED; i > 0; i--) {
-        color[i] = color[i - 1];
-        strip.setPixelColor(i, color[i]);
+        color[i] = color[i - 1];  // propagation
+        if (s == params.speeder - 1) strip.setPixelColor(i, color[i]);
       }
     }
     strip.show();
@@ -143,10 +147,19 @@ void loop1() {
   while (MIDI.read())
     ;
 
-  display.clearDisplay();
+  /* display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
   display.print("Coucou");
   display.display();
-  delay(20);
+  delay(20);*/
+  /* Serial.print(note);
+  Serial.print(" ");
+  Serial.print(brightness);
+  Serial.print(" ");
+  Serial.println(color[0]);*/
+  /*pushButton.update();
+  if (pushButton.is_pressed()) digitalWrite(LED_BUILTIN,HIGH);
+  else digitalWrite(LED_BUILTIN,LOW);*/
+
 }
