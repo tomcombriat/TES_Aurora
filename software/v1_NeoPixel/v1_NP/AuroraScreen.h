@@ -106,13 +106,15 @@ public:
             }*/
           case 7:  // Lowest hue
             {
-              param->lowest_hue += delta<<2;
+              param->lowest_hue += delta<<4;
+              //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->lowest_hue))); // passed in global to allow differtent type of strips…
               drawValues("Hue min", param->lowest_hue,1);
               break;
             }
           case 8:  // Highest hue
             {
-              param->highest_hue += delta<<2;
+              param->highest_hue += delta<<4;
+              //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->highest_hue))); // passed in global to allow differtent type of strips…
               drawValues("Hue max", param->highest_hue,1);
               break;
             }

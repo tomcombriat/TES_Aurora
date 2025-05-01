@@ -158,7 +158,7 @@ void loop() {
     /*Serial.print((uint16_t((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
 Serial.print(" ");
 Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));*/
-    color[0] = (strip.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
+    color[0] = strip.gamma32(strip.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
     uint8_t r = (uint8_t)(color[0] >> 16), g = (uint8_t)(color[0] >> 8), b = (uint8_t)color[0];
     uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
