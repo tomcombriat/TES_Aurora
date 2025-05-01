@@ -2,6 +2,7 @@
 #include <RotaryEncoder.h>
 #include <Button.h>  // from TES_eSax-lib
 #include <MIDI.h>
+#include <EEPROM.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -89,6 +90,8 @@ void handlePitchBend(byte _channel, int _pitchbend) {
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 void setup() {
+  EEPROM.begin(256);
+
   pinMode(LED_BUILTIN, OUTPUT);
 
   attachInterrupt(digitalPinToInterrupt(ROTARY_PIN1), checkPosition, CHANGE);

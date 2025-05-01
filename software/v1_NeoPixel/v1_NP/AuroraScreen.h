@@ -86,6 +86,24 @@ public:
               drawValues("MIDI PB CC", param->midi_pitchbend_amplitude_control);
               break;
             }
+          case 6:  // save
+            {
+              drawValues("Save preset", 0);
+              if (delta) {
+                EEPROM.put(0, *param);
+                EEPROM.commit();
+              }
+              break;
+            }
+          case 7:  // recall
+            {
+              drawValues("Recall preset", 0);
+              if (delta) {
+                EEPROM.get(0, *param);
+                //EEPROM.commit();
+              }
+              break;
+            }
         }
         screen->display();
       }
@@ -101,7 +119,7 @@ private:
   unsigned long response_time, next_update = 0;
   bool has_changed = false;
   uint8_t currentItem;
-  const uint8_t N_item = 6;
+  const uint8_t N_item = 8;
 
   void drawValues(String title, int value) {
     //Refresh the top bar
@@ -114,7 +132,7 @@ private:
     // Refresh the value
     screen->fillRect(0, 20, screen->width(), screen->height() - 20, SSD1306_BLACK);
     screen->setCursor(30, 60);
-        screen->setTextSize(4);
+    screen->setTextSize(4);
     screen->setTextColor(SSD1306_WHITE);
     screen->print(value);
   }
