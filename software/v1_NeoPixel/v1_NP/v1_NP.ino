@@ -8,6 +8,8 @@
 #include <Adafruit_SSD1306.h>
 #include "AuroraScreen.h"
 #include "AuroraParameters.h"
+#include "loaded6pt7b.h"
+#include "loaded8pt7b.h"
 
 
 AuroraParameters params;
@@ -114,14 +116,16 @@ void setup() {
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
-  display.setTextSize(3);
-  display.setCursor(40, 0);
+  display.setTextSize(2);
+  display.setCursor(30, 20);
+  display.setFont(&loaded8pt7b);
   display.print("TES");
+  display.setFont(&loaded6pt7b);
   display.setTextSize(1);
-  display.setCursor(50, 30);
+  display.setCursor(50, 40);
   display.print("Aurora v1");
-  display.setCursor(0, 54);
-  display.print("Powered by Adafruit");
+  display.setCursor(0, 63);
+  display.print("Pwd by Adafruit");
   display.display();
   delay(500);
 }

@@ -106,14 +106,14 @@ private:
   void drawValues(String title, int value) {
     //Refresh the top bar
     screen->fillRect(0, 0, screen->width(), 20, SSD1306_WHITE);
-    screen->setCursor(10, 7);
+    screen->setCursor(10, 13);
     screen->setTextColor(SSD1306_BLACK);
     screen->setTextSize(1);
     screen->print(title);
 
     // Refresh the value
     screen->fillRect(0, 20, screen->width(), screen->height() - 20, SSD1306_BLACK);
-    screen->setCursor(50, 35);
+    screen->setCursor(30, 60);
         screen->setTextSize(4);
     screen->setTextColor(SSD1306_WHITE);
     screen->print(value);
