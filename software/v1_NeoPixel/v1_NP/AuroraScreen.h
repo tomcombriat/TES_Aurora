@@ -95,13 +95,25 @@ public:
               }
               break;
             }
-          case 7:  // recall
+            /*case 7:  // recall
             {
               drawValues("Recall preset", 0);
               if (delta) {
                 EEPROM.get(0, *param);
                 //EEPROM.commit();
               }
+              break;
+            }*/
+          case 7:  // Lowest hue
+            {
+              param->lowest_hue += delta<<2;
+              drawValues("Hue min", param->lowest_hue,1);
+              break;
+            }
+          case 8:  // Highest hue
+            {
+              param->highest_hue += delta<<2;
+              drawValues("Hue max", param->highest_hue,1);
               break;
             }
         }
@@ -119,9 +131,9 @@ private:
   unsigned long response_time, next_update = 0;
   bool has_changed = false;
   uint8_t currentItem;
-  const uint8_t N_item = 8;
+  const uint8_t N_item = 9;
 
-  void drawValues(String title, int value) {
+  void drawValues(String title, int value, uint8_t value_size=4) {
     //Refresh the top bar
     screen->fillRect(0, 0, screen->width(), 20, SSD1306_WHITE);
     screen->setCursor(10, 13);
@@ -132,7 +144,7 @@ private:
     // Refresh the value
     screen->fillRect(0, 20, screen->width(), screen->height() - 20, SSD1306_BLACK);
     screen->setCursor(30, 60);
-    screen->setTextSize(4);
+    screen->setTextSize(value_size);
     screen->setTextColor(SSD1306_WHITE);
     screen->print(value);
   }

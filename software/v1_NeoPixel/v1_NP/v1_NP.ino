@@ -7,6 +7,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
+#include "folder.h"  // from Mozzi
 #include "AuroraScreen.h"
 #include "AuroraParameters.h"
 #include "loaded6pt7b.h"
@@ -48,6 +49,9 @@ AuroraScreen auroraScreen(&display, &encoder, &pushButton, &params, 100);
 
 
 
+/** COLOR FOLDER*/
+WaveFolder<uint32_t> folder;
+
 /** STRIP*/
 #define PIN 11
 #define N_LED 120
@@ -71,6 +75,7 @@ void handleCC(byte _channel, byte control1, byte control2) {
 void handleNoteOn(byte _channel, byte _note, byte _velocity) {
   if (_channel == params.midi_channel) {
     note = _note;
+    brightness = _velocity << 7;
   }
 }
 
@@ -90,7 +95,11 @@ void handlePitchBend(byte _channel, int _pitchbend) {
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, MIDI);
 
 void setup() {
+  //Serial.begin(115200);
   EEPROM.begin(256);
+  if (pushButton.is_pressed()) EEPROM.put(0, params);  // factory reset
+  else EEPROM.get(0, params);
+
 
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -112,7 +121,7 @@ void setup() {
   strip.setBrightness(255);
   strip.show();  // Initialize all pixels to 'off'
 
-
+  folder.setLimits(params.lowest_hue, params.highest_hue);
 
   Wire.setSDA(20);
   Wire.setSCL(21);
@@ -146,8 +155,10 @@ void loop() {
 
   if (millis() > next_update) {
     next_update += params.period;
-
-    color[0] = (strip.ColorHSV(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));  //, 255, brightness >> 6)); // with gamma on the value
+    /*Serial.print((uint16_t((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
+Serial.print(" ");
+Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));*/
+    color[0] = (strip.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
     uint8_t r = (uint8_t)(color[0] >> 16), g = (uint8_t)(color[0] >> 8), b = (uint8_t)color[0];
     uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
