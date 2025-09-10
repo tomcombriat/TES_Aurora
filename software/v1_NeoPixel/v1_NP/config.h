@@ -34,7 +34,7 @@ Hardware parameters, should probably not be changed
 
 /** STRIP 1*/
 #define STRIP1_TYPE DOTSTAR
-#define STRIP1_NLED 300
+#define STRIP1_NLED 3000
 
 #if (STRIP1_TYPE == DOTSTAR)
 #include <Adafruit_DotStar.h>
@@ -45,7 +45,7 @@ Hardware parameters, should probably not be changed
 #endif
 
 
-#define STRIP2_TYPE NONE
+#define STRIP2_TYPE NEOPIXEL
 #define STRIP2_NLED 150
 
 

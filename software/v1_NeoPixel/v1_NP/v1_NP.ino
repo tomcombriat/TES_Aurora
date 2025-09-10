@@ -29,7 +29,6 @@ int16_t pitchbend = 0;
 RotaryEncoder encoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
 void checkPosition() {
   encoder.tick();  // just call tick() to check the state.
-  digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
 }
 
 /** PUSH BUTTON */
@@ -194,20 +193,27 @@ void loop() {
     /*Serial.print((uint16_t((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
 Serial.print(" ");
 Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));*/
-    color1[0] = strip1.gamma32(strip1.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
-    uint8_t r = (uint8_t)(color1[0] >> 16), g = (uint8_t)(color1[0] >> 8), b = (uint8_t)color1[0];
+    uint32_t color = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));
+    // color1[0] = strip1.gamma32(strip1.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
+    uint8_t r = (uint8_t)(color >> 16), g = (uint8_t)(color >> 8), b = (uint8_t)color;
     uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
     g = (g * br) >> 8;
     b = (b * br) >> 8;
-    color1[0] = b + (g << 8) + (r << 16);
-    
-    strip1.setPixelColor(0, color1[0]);
-    strip2.setPixelColor(0, color2[0]);
+    color = b + (g << 8) + (r << 16);
+
+#if (STRIP1_TYPE != NONE)
+    strip1.setPixelColor(0, color);
+    color1[0] = color;
+#endif
+#if (STRIP2_TYPE != NONE)
+    strip2.setPixelColor(0, color);
+    color2[0] = color;
+#endif
 
     for (uint8_t s = 0; s < params.speeder; s++) {
 #if (STRIP1_TYPE != NONE)
-      for (int i = STRIP1_NLED; i > 0; i--) {
+      for (int i = STRIP1_NLED-1; i > 0; i--) {
         color1[i] = color1[i - 1];  // propagation
         if (s == params.speeder - 1) {
           strip1.setPixelColor(i, color1[i]);
@@ -215,11 +221,14 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
         }
       }
 #endif
+
 #if (STRIP2_TYPE != NONE)
-      for (int i = STRIP2_NLED; i > 0; i--) {
+      for (int i = STRIP2_NLED-1; i > 0; i--) {
         color2[i] = color2[i - 1];  // propagation
+          
         if (s == params.speeder - 1) {
           strip2.setPixelColor(i, color2[i]);
+          
         }
       }
 #endif
@@ -229,6 +238,7 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
     strip1.show();
 #endif
 #if (STRIP2_TYPE != NONE)
+//digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     strip2.show();
 #endif
   }
