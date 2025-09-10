@@ -1,4 +1,6 @@
-#include <Adafruit_NeoPixel.h>
+#include "config.h"
+
+//#include <Adafruit_NeoPixel.h>
 #include <RotaryEncoder.h>
 #include <Button.h>  // from TES_eSax-lib
 #include <MIDI.h>
@@ -23,8 +25,7 @@ int16_t pitchbend = 0;
 
 
 /** ROTARY */
-#define ROTARY_PIN1 19
-#define ROTARY_PIN2 18
+
 RotaryEncoder encoder(ROTARY_PIN1, ROTARY_PIN2, RotaryEncoder::LatchMode::FOUR3);
 void checkPosition() {
   encoder.tick();  // just call tick() to check the state.
@@ -32,20 +33,14 @@ void checkPosition() {
 }
 
 /** PUSH BUTTON */
-Button pushButton(22);
+Button pushButton(PUSH_BUTTON_PIN);
 
 
-/** SCREEN */
-#define SCREEN_WIDTH 128  // OLED display width, in pixels
-#define SCREEN_HEIGHT 64  // OLED display height, in pixels
 
-#define OLED_RESET -1
-#define SCREEN_ADDRESS 0x3C
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
 
 AuroraScreen auroraScreen(&display, &encoder, &pushButton, &params, 100);
-//AuroraScreen auroraScreen();
 
 
 
@@ -53,11 +48,26 @@ AuroraScreen auroraScreen(&display, &encoder, &pushButton, &params, 100);
 WaveFolder<uint32_t> folder;
 
 /** STRIP*/
-#define PIN 11
-#define N_LED 120
 
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(N_LED, PIN, NEO_GRB + NEO_KHZ800);
-uint32_t color[N_LED];
+
+
+#if (STRIP1_TYPE == DOTSTAR)
+Adafruit_DotStar strip1 = Adafruit_DotStar(STRIP1_NLED, STRIP1_COLORTYPE, &SPI);
+#elif (STRIP1_TYPE == NEOPIXEL)
+Adafruit_NeoPixel strip1 = Adafruit_NeoPixel(STRIP1_NLED, STRIP1_TX, STRIP1_COLORTYPE);
+#endif
+
+
+#if (STRIP2_TYPE == DOTSTAR)
+Adafruit_DotStar strip2 = Adafruit_DotStar(STRIP2_NLED, STRIP2_COLORTYPE, &SPI1);
+#elif (STRIP2_TYPE == NEOPIXEL)
+Adafruit_NeoPixel strip2 = Adafruit_NeoPixel(STRIP2_NLED, STRIP2_TX, STRIP2_COLORTYPE);
+#endif
+
+
+
+uint32_t color1[STRIP1_NLED];
+uint32_t color2[STRIP2_NLED];
 unsigned long next_update = 0;
 
 void handleCC(byte _channel, byte control1, byte control2) {
@@ -117,14 +127,40 @@ void setup() {
   MIDI.begin(MIDI_CHANNEL_OMNI);
 
 
-  strip.begin();
-  strip.setBrightness(255);
-  strip.show();  // Initialize all pixels to 'off'
+ // SPI.setSCK(2);
+ // SPI.setTX(3);
+  //strip2.begin();
+ // strip2.setBrightness(255);
+ // strip2.show();  // Initialize all pixels to 'off'
+
+#if (STRIP1_TYPE == DOTSTAR)
+  SPI.setSCK(STRIP1_SCK);
+  SPI.setTX(STRIP1_TX);
+#endif
+
+#if (STRIP2_TYPE == DOTSTAR)
+  SPI1.setSCK(STRIP2_SCK);
+  SPI1.setTX(STRIP2_TX);
+#endif
+
+#if (STRIP1_TYPE != NONE)
+  strip1.begin();
+  strip1.setBrightness(255);
+  strip1.show();  // Initialize all pixels to 'off'
+#endif
+
+#if (STRIP2_TYPE != NONE)
+  strip2.begin();
+  strip2.setBrightness(255);
+  strip2.show();  // Initialize all pixels to 'off'
+#endif
+
+
 
   folder.setLimits(params.lowest_hue, params.highest_hue);
 
-  Wire.setSDA(20);
-  Wire.setSCL(21);
+  Wire.setSDA(SCREEN_SDA);
+  Wire.setSCL(SCREEN_SCL);
   display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
   display.clearDisplay();
   display.setTextColor(SSD1306_WHITE);
@@ -158,22 +194,27 @@ void loop() {
     /*Serial.print((uint16_t((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
 Serial.print(" ");
 Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));*/
-    color[0] = strip.gamma32(strip.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
-    uint8_t r = (uint8_t)(color[0] >> 16), g = (uint8_t)(color[0] >> 8), b = (uint8_t)color[0];
+    color1[0] = strip1.gamma32(strip1.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
+    uint8_t r = (uint8_t)(color1[0] >> 16), g = (uint8_t)(color1[0] >> 8), b = (uint8_t)color1[0];
     uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
     g = (g * br) >> 8;
     b = (b * br) >> 8;
-    color[0] = b + (g << 8) + (r << 16);
-    strip.setPixelColor(0, color[0]);
+    color1[0] = b + (g << 8) + (r << 16);
+    strip1.setPixelColor(0, color1[0]);
+    strip2.setPixelColor(0, color1[0]);
 
     for (uint8_t s = 0; s < params.speeder; s++) {
-      for (int i = N_LED; i > 0; i--) {
-        color[i] = color[i - 1];  // propagation
-        if (s == params.speeder - 1) strip.setPixelColor(i, color[i]);
+      for (int i = STRIP2_NLED; i > 0; i--) {
+        color1[i] = color1[i - 1];  // propagation
+        if (s == params.speeder - 1) {
+          strip1.setPixelColor(i, color1[i]);
+          strip2.setPixelColor(i, color1[i]);
+        }
       }
     }
-    strip.show();
+    strip1.show();
+    strip2.show();
   }
 }
 
