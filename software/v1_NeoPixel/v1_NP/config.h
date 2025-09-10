@@ -45,7 +45,7 @@ Hardware parameters, should probably not be changed
 #endif
 
 
-#define STRIP2_TYPE NEOPIXEL
+#define STRIP2_TYPE NONE
 #define STRIP2_NLED 150
 
 

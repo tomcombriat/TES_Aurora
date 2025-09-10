@@ -127,11 +127,11 @@ void setup() {
   MIDI.begin(MIDI_CHANNEL_OMNI);
 
 
- // SPI.setSCK(2);
- // SPI.setTX(3);
+  // SPI.setSCK(2);
+  // SPI.setTX(3);
   //strip2.begin();
- // strip2.setBrightness(255);
- // strip2.show();  // Initialize all pixels to 'off'
+  // strip2.setBrightness(255);
+  // strip2.show();  // Initialize all pixels to 'off'
 
 #if (STRIP1_TYPE == DOTSTAR)
   SPI.setSCK(STRIP1_SCK);
@@ -201,20 +201,36 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
     g = (g * br) >> 8;
     b = (b * br) >> 8;
     color1[0] = b + (g << 8) + (r << 16);
+    
     strip1.setPixelColor(0, color1[0]);
-    strip2.setPixelColor(0, color1[0]);
+    strip2.setPixelColor(0, color2[0]);
 
     for (uint8_t s = 0; s < params.speeder; s++) {
-      for (int i = STRIP2_NLED; i > 0; i--) {
+#if (STRIP1_TYPE != NONE)
+      for (int i = STRIP1_NLED; i > 0; i--) {
         color1[i] = color1[i - 1];  // propagation
         if (s == params.speeder - 1) {
           strip1.setPixelColor(i, color1[i]);
-          strip2.setPixelColor(i, color1[i]);
+          //strip2.setPixelColor(i, color1[i]);
         }
       }
+#endif
+#if (STRIP2_TYPE != NONE)
+      for (int i = STRIP2_NLED; i > 0; i--) {
+        color2[i] = color2[i - 1];  // propagation
+        if (s == params.speeder - 1) {
+          strip2.setPixelColor(i, color2[i]);
+        }
+      }
+#endif
     }
+
+#if (STRIP1_TYPE != NONE)
     strip1.show();
+#endif
+#if (STRIP2_TYPE != NONE)
     strip2.show();
+#endif
   }
 }
 
