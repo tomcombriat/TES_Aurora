@@ -1,6 +1,6 @@
 #include "config.h"
 
-//#include <Adafruit_NeoPixel.h>
+#include <Adafruit_NeoPixel.h>  // for hue/hsv functions at the very least
 #include <RotaryEncoder.h>
 #include <Button.h>  // from TES_eSax-lib
 #include <MIDI.h>
@@ -193,8 +193,11 @@ void loop() {
     /*Serial.print((uint16_t((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)));
 Serial.print(" ");
 Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));*/
-    uint32_t color = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));
+    uint32_t color = Adafruit_NeoPixel::gamma32(Adafruit_NeoPixel::ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3)), params.global_saturation,params.global_brightness));
+
     // color1[0] = strip1.gamma32(strip1.ColorHSV(folder.next(((note) << 10) + ((pitchbend * pitchbendAmplitude) >> 3))));  //, 255, brightness >> 6)); // with gamma on the value
+
+    // This is to have more dynamic range on the brightness (other, colors get averaged to 0 at low dynamic because of the gamma32)
     uint8_t r = (uint8_t)(color >> 16), g = (uint8_t)(color >> 8), b = (uint8_t)color;
     uint8_t br = brightness >> 6;
     r = (r * br) >> 8;
@@ -213,7 +216,7 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
 
     for (uint8_t s = 0; s < params.speeder; s++) {
 #if (STRIP1_TYPE != NONE)
-      for (int i = STRIP1_NLED-1; i > 0; i--) {
+      for (int i = STRIP1_NLED - 1; i > 0; i--) {
         color1[i] = color1[i - 1];  // propagation
         if (s == params.speeder - 1) {
           strip1.setPixelColor(i, color1[i]);
@@ -223,12 +226,11 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
 #endif
 
 #if (STRIP2_TYPE != NONE)
-      for (int i = STRIP2_NLED-1; i > 0; i--) {
+      for (int i = STRIP2_NLED - 1; i > 0; i--) {
         color2[i] = color2[i - 1];  // propagation
-          
+
         if (s == params.speeder - 1) {
           strip2.setPixelColor(i, color2[i]);
-          
         }
       }
 #endif
@@ -238,7 +240,7 @@ Serial.println(folder.next(uint16_t(((note) << 10) + ((pitchbend * pitchbendAmpl
     strip1.show();
 #endif
 #if (STRIP2_TYPE != NONE)
-//digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+    //digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
     strip2.show();
 #endif
   }
