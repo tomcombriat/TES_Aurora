@@ -106,16 +106,30 @@ public:
             }*/
           case 7:  // Lowest hue
             {
-              param->lowest_hue += delta<<4;
+              param->lowest_hue += delta << 4;
               //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->lowest_hue))); // passed in global to allow differtent type of strips…
-              drawValues("Hue min", param->lowest_hue,1);
+              drawValues("Hue min", param->lowest_hue, 1);
               break;
             }
           case 8:  // Highest hue
             {
-              param->highest_hue += delta<<4;
+              param->highest_hue += delta << 4;
               //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->highest_hue))); // passed in global to allow differtent type of strips…
-              drawValues("Hue max", param->highest_hue,1);
+              drawValues("Hue max", param->highest_hue, 1);
+              break;
+            }
+          case 9:  // Brightness
+            {
+              param->global_brightness += delta;
+              //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->highest_hue))); // passed in global to allow differtent type of strips…
+              drawValues("Brightness", param->global_brightness);
+              break;
+            }
+          case 10:  // Saturation
+            {
+              param->global_saturation += delta;
+              //strip.setPixelColor(0,strip.gamma32(strip.ColorHSV(param->highest_hue))); // passed in global to allow differtent type of strips…
+              drawValues("Saturation", param->global_saturation);
               break;
             }
         }
@@ -133,9 +147,9 @@ private:
   unsigned long response_time, next_update = 0;
   bool has_changed = false;
   uint8_t currentItem;
-  const uint8_t N_item = 9;
+  const uint8_t N_item = 11;
 
-  void drawValues(String title, int value, uint8_t value_size=4) {
+  void drawValues(String title, int value, uint8_t value_size = 4) {
     //Refresh the top bar
     screen->fillRect(0, 0, screen->width(), 20, SSD1306_WHITE);
     screen->setCursor(10, 13);
